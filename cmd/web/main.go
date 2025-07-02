@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sadamoto/kindle-notifier/internal/db"
@@ -43,10 +44,18 @@ func main() {
 		port = "8080" // Default port if not specified
 	}
 
+	// Create custom server with timeouts
+	server := &http.Server{
+		Addr:              fmt.Sprintf("0.0.0.0:%s", port),
+		ReadHeaderTimeout: 60 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
 	// Start server
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Starting server on %s", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	log.Printf("Starting server on %s", server.Addr)
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 } 
