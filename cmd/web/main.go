@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/sadamoto/kindle-notifier/internal/db"
 	"github.com/sadamoto/kindle-notifier/internal/web"
 )
 
