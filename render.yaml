@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: kindle-notifier
+    env: docker
+    rootDir: kindle-notifier
+    buildCommand: docker build -t kindle-notifier .
+    startCommand: docker run -p $PORT:8080 kindle-notifier
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: kindle-db
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: kindle-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: kindle-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: kindle-db
+          property: password
+      - key: DB_PORT
+        fromDatabase:
+          name: kindle-db
+          property: port
+      - key: PAAPI_ACCESS_KEY
+        sync: false
+      - key: PAAPI_SECRET_KEY
+        sync: false
+      - key: PAAPI_PARTNER_TAG
+        sync: false
+
+databases:
+  - name: kindle-db
+    databaseName: kindle_db
+    plan: free 
