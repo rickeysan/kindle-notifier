@@ -11,6 +11,11 @@ import (
 	"github.com/sadamoto/kindle-notifier/internal/web"
 )
 
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func main() {
 	// Load environment variables in development
 	if os.Getenv("RENDER") == "" {
@@ -30,6 +35,7 @@ func main() {
 
 	// Set up routes
 	http.HandleFunc("/", handler.HandleIndex)
+	http.HandleFunc("/health", healthCheck)  // Add health check endpoint
 
 	// Get port from environment variable
 	port := os.Getenv("PORT")

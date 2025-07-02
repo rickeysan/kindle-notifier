@@ -5,6 +5,12 @@ services:
     rootDir: kindle-notifier
     buildCommand: docker build -t kindle-notifier .
     startCommand: docker run -p $PORT:8080 kindle-notifier
+    healthCheckPath: /health
+    healthCheckTimeout: 100
+    buildCommand: |
+      chmod +x ./scripts/migrate.sh
+      ./scripts/migrate.sh
+      docker build -t kindle-notifier .
     envVars:
       - key: DB_HOST
         fromDatabase:
