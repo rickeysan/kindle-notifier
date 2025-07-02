@@ -39,29 +39,27 @@ func NewHandler() (*Handler, error) {
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	// Get database connection
 	database := db.GetDB()
-	if database == nil {
-		log.Printf("Error: Database connection not available")
-		http.Error(w, "Service Temporarily Unavailable", http.StatusServiceUnavailable)
-		return
-	}
+	dbConnected := db.IsConnected()
 
-	// Get all books with their categories
-	var books []models.Book
-	if err := database.Preload("Categories").Order("added_at DESC").Find(&books).Error; err != nil {
-		log.Printf("Error fetching books: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// Render template
+	// Prepare data structure
 	data := struct {
 		Books []models.Book
 		DBConnected bool
 	}{
-		Books: books,
-		DBConnected: db.IsConnected(),
+		Books: []models.Book{}, // Initialize with empty slice
+		DBConnected: dbConnected,
 	}
 
+	// Only try to fetch books if database is connected
+	if dbConnected && database != nil {
+		if err := database.Preload("Categories").Order("added_at DESC").Find(&data.Books).Error; err != nil {
+			log.Printf("Error fetching books: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Render template
 	if err := h.templates.ExecuteTemplate(w, "index.html", data); err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
