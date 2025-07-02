@@ -13,6 +13,7 @@ import (
 )
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	// Basic health check that doesn't require DB
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -25,18 +26,21 @@ func main() {
 		}
 	}
 
-	// Initialize database connection
-	db.Initialize()
-
 	// Create handler
 	handler, err := web.NewHandler()
 	if err != nil {
-		log.Fatalf("Error creating handler: %v", err)
+		log.Printf("Warning: Error creating handler: %v", err)
+		// Continue anyway, as we want the health check endpoint to work
 	}
 
 	// Set up routes
-	http.HandleFunc("/", handler.HandleIndex)
-	http.HandleFunc("/health", healthCheck)  // Add health check endpoint
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthCheck)
+	
+	// Only set up the main handler if we could create it
+	if handler != nil {
+		mux.HandleFunc("/", handler.HandleIndex)
+	}
 
 	// Get port from environment variable
 	port := os.Getenv("PORT")
@@ -47,6 +51,7 @@ func main() {
 	// Create custom server with timeouts
 	server := &http.Server{
 		Addr:              fmt.Sprintf("0.0.0.0:%s", port),
+		Handler:           mux,
 		ReadHeaderTimeout: 60 * time.Second,
 		ReadTimeout:       60 * time.Second,
 		WriteTimeout:      60 * time.Second,

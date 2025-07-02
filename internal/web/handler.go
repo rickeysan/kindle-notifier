@@ -37,9 +37,17 @@ func NewHandler() (*Handler, error) {
 
 // HandleIndex handles the index page
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
+	// Get database connection
+	database := db.GetDB()
+	if database == nil {
+		log.Printf("Error: Database connection not available")
+		http.Error(w, "Service Temporarily Unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
 	// Get all books with their categories
 	var books []models.Book
-	if err := db.DB.Preload("Categories").Order("added_at DESC").Find(&books).Error; err != nil {
+	if err := database.Preload("Categories").Order("added_at DESC").Find(&books).Error; err != nil {
 		log.Printf("Error fetching books: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -48,8 +56,10 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	// Render template
 	data := struct {
 		Books []models.Book
+		DBConnected bool
 	}{
 		Books: books,
+		DBConnected: db.IsConnected(),
 	}
 
 	if err := h.templates.ExecuteTemplate(w, "index.html", data); err != nil {
